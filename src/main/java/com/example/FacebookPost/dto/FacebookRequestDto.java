@@ -16,7 +16,7 @@ public class FacebookRequestDto {
 
 
 
-    private String userName;
+    private String sessionId;
     private String postCaption;
     private List<String> postImages;
     private int like;

@@ -29,10 +29,10 @@ public class FacebookPostServiceImpl implements FacebookPostService {
     private UserRepository userRepository;
 
     @Override
-    public FacebookResponseDto uploadFacebookPost(FacebookRequestDto facebookRequestDto) {
+    public FacebookResponseDto uploadFacebookPost(FacebookRequestDto facebookRequestDto,String userName) {
 
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(Calendar.getInstance().getTime());
-        String postId = facebookRequestDto.getUserName()+timeStamp;
+        String postId = userName+timeStamp;
         FacebookPost facebookPost=new FacebookPost();
         User user = new User();
         user.setLikeDislikeFullName("Prateek");
@@ -40,7 +40,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
         user.setLikeDislikeProfileUrl("prateek.png");
         userRepository.save(user);
         facebookPost.setPostId(postId);
-        facebookPost.setUserName(facebookRequestDto.getUserName());
+        facebookPost.setUserName(userName);
         facebookPost.setPostCaption(facebookRequestDto.getPostCaption());
         facebookPost.setLike(facebookRequestDto.getLike());
         facebookPost.setDislike(facebookRequestDto.getDislike());
@@ -55,17 +55,17 @@ public class FacebookPostServiceImpl implements FacebookPostService {
         FacebookResponseDto facebookResponseDto=new FacebookResponseDto();
         facebookResponseDto.setPostId(facebookPost.getPostId());
         facebookResponseDto.setMessage("Uploaded Successfully");
-        facebookResponseDto.setUserName(facebookPost.getPostId());
+        facebookResponseDto.setUserName(userName);
 
         return facebookResponseDto;
 
     }
 
     @Override
-    public FacebookResponseDto updateFacebookPostByPostId(FacebookRequestDto facebookRequestDto,String postId) {
+    public FacebookResponseDto updateFacebookPostByPostId(FacebookRequestDto facebookRequestDto,String postId,String userName) {
 
        FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
-       facebookPost.setUserName(facebookRequestDto.getUserName());
+       facebookPost.setUserName(userName);
        facebookPost.setPostDisLike(facebookRequestDto.getPostDisLike());
        facebookPost.setPostLike(facebookRequestDto.getPostLike());
        facebookPost.setLike(facebookRequestDto.getLike());
@@ -76,7 +76,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
        facebookPost.setPostCaption(facebookRequestDto.getPostCaption());
        facebookPostRepository.save(facebookPost);
        FacebookResponseDto facebookResponseDto=new FacebookResponseDto();
-       facebookResponseDto.setUserName(facebookRequestDto.getUserName());
+       facebookResponseDto.setUserName(userName);
        facebookResponseDto.setMessage("Update SuccessFully");
        facebookResponseDto.setPostId(postId);
        return facebookResponseDto;

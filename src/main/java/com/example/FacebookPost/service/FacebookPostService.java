@@ -13,10 +13,10 @@ import java.util.Optional;
  **/
 public interface FacebookPostService {
 
-    FacebookResponseDto uploadFacebookPost(FacebookRequestDto facebookRequestDto);
+    FacebookResponseDto uploadFacebookPost(FacebookRequestDto facebookRequestDto,String userName);
     String deleteFacebookPost(String postId);
     Optional<FacebookPost> getFacebookPost(String postId);
     List<FacebookPost> getFacebookPostByUserName (String userName);
-    FacebookResponseDto updateFacebookPostByPostId(FacebookRequestDto facebookRequestDto,String postId);
+    FacebookResponseDto updateFacebookPostByPostId(FacebookRequestDto facebookRequestDto,String postId,String userName);
 
 }

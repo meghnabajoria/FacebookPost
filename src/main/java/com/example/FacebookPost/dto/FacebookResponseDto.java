@@ -1,10 +1,7 @@
 package com.example.FacebookPost.dto;
 
-import com.example.FacebookPost.entity.User;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 /**
  * @author meghna.bajoria
