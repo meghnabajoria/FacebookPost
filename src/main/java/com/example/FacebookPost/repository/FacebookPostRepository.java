@@ -1,8 +1,10 @@
 package com.example.FacebookPost.repository;
 
 import com.example.FacebookPost.entity.FacebookPost;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+
 
 import java.util.List;
 
@@ -13,7 +15,12 @@ import java.util.List;
 public interface FacebookPostRepository extends MongoRepository<FacebookPost,String> {
 
     @Query(value ="{userName : ?0}")
-    List<FacebookPost> getFacebookPostByUserName(String userName);
+    List<FacebookPost> getFacebookPostByUserName(String userName,Sort sort);
+
+
+    @Query("{ state:'ACTIVE' }")
+    void findOneActive(Sort sort);
+
 
     @Query(value = "{_id : ?0}")
     FacebookPost findByPostId(String postId);

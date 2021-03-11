@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -24,11 +25,13 @@ public class FacebookPost {
     private String userName;
     @Id
     private String postId;
+    private String profileName;
     private String postCaption;
     private List<String> postImages;
     private int like;
     private int dislike;
     private List<User> postLike;
-    private List<User> postDisLike;
+    private List<User> postDislike;
+    private String date;
     private String location;
 }
