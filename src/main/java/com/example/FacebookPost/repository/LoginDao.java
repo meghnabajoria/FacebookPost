@@ -34,6 +34,12 @@ public class LoginDao {
     }
 
 
+    public String deleteUser(String sessionId){
+        template.opsForHash().delete(HASH_KEY,sessionId);
+        return "User removed !!";
+    }
+
+
 
 }
 

@@ -1,19 +1,25 @@
 package com.example.FacebookPost.service.serviceImpl;
 
-import com.example.FacebookPost.dto.FacebookRequestDto;
-import com.example.FacebookPost.dto.FacebookResponseDto;
-import com.example.FacebookPost.dto.LikeDislikeRequestDto;
+import com.example.FacebookPost.clients.FriendClient;
+import com.example.FacebookPost.clients.UserClient;
+import com.example.FacebookPost.dto.*;
+import com.example.FacebookPost.entity.Comments;
 import com.example.FacebookPost.entity.FacebookPost;
+import com.example.FacebookPost.entity.Friend;
 import com.example.FacebookPost.entity.User;
 import com.example.FacebookPost.repository.FacebookPostRepository;
 import com.example.FacebookPost.repository.UserRepository;
 import com.example.FacebookPost.service.FacebookPostService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.MongoClients;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Sort;
@@ -29,6 +35,14 @@ import java.util.*;
  **/
 @Service
 public class FacebookPostServiceImpl implements FacebookPostService {
+
+    @Autowired
+    private FriendClient friendClient;
+
+    @Autowired
+    private UserClient userClient;
+
+    static MongoOperations mongoOperations = new MongoTemplate(MongoClients.create(),"FacebookPostdb");
 
     public static Properties getPropertiesOfKafka(){
         Properties props = new Properties();
@@ -58,9 +72,22 @@ public class FacebookPostServiceImpl implements FacebookPostService {
         facebookPost.setPostCaption(facebookRequestDto.getPostCaption());
         facebookPost.setLocation(facebookRequestDto.getLocation());
         facebookPost.setDate(timeStamp);
+        facebookPost.setLike(facebookPost.getLike());
+        facebookPost.setDislike(facebookPost.getDislike());
+        List<User> likedList=new ArrayList<>();
+        facebookPost.setPostLikedList(likedList);
+        List<User> dislikedList=new ArrayList<>();
+        facebookPost.setPostDislikedList(dislikedList);
         List<String> url=facebookRequestDto.getPostImages();
         facebookPost.setPostImages(url);
+
+//        //Comments
+        List<Comments> commentList=new ArrayList<>();
+        facebookPost.setCommentList(commentList);
+
         facebookPostRepository.save(facebookPost);
+        //Notification
+        makeNotification(userName,postId);
         FacebookResponseDto facebookResponseDto=new FacebookResponseDto();
         facebookResponseDto.setPostId(facebookPost.getPostId());
         facebookResponseDto.setMessage("Uploaded Successfully");
@@ -110,52 +137,299 @@ public class FacebookPostServiceImpl implements FacebookPostService {
 
 
     }
-    private static void kafkaMethod(String userName ,String sessionID){
+    private static void kafkaMethod(String key ,String value){
 
         Producer<String,String> producer = new KafkaProducer<>(getPropertiesOfKafka());
-        producer.send(new ProducerRecord<>("notifications",userName,sessionID));
+        producer.send(new ProducerRecord<>("notifications",key,value));
         producer.close();
     }
 
 
     @Override
-    public String likeDislike(String userName, LikeDislikeRequestDto likeDislikeRequestDto)
-    {
+    public String likeDislike(LikeDislikeRequestDto likeDislikeRequestDto) {
 
-        String postId=likeDislikeRequestDto.getPostId();
+//        String postId = likeDislikeRequestDto.getPostId();
+//        FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
+//
+//        if(facebookPost.getUserName().equalsIgnoreCase(userName)) {
+//
+//            if(likeDislikeRequestDto.getLike()==1) {
+//                List<User> userList=facebookPost.getPostLike();
+//                int prevLike = facebookPost.getLike();
+//                facebookPost.setLike(likeDislikeRequestDto.getLike() + prevLike);
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                userList.add(user);
+//                facebookPost.setPostLike(userList);
+//            }
+//            if(likeDislikeRequestDto.getDislike()==1){
+//                int prevDislike = facebookPost.getDislike();
+//                facebookPost.setDislike(likeDislikeRequestDto.getDislike() + prevDislike);
+//                List<User> userList2=facebookPost.getPostDislike();
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                userList2.add(user);
+//                facebookPost.setPostDislike(userList2);
+//            }
+//            facebookPostRepository.save(facebookPost);
+//            return "successFul";
+//        }
+//        else
+//        {
+//            return "Can't Find User";
+//        }
+//        Optional<FacebookPost> optionalFacebookPost = facebookPostRepository.findById(postId);
+//        if (optionalFacebookPost.isPresent()) {
+//            int likes = optionalFacebookPost.get().getLike();
+//            int disLikes = optionalFacebookPost.get().getDislike();
+//            likes += likeDislikeRequestDto.getLike();
+//            disLikes += likeDislikeRequestDto.getDislike();
+//            Query query = new Query();
+//            Criteria criteria = Criteria.where("postId").is(postId);
+//            query.addCriteria(criteria);
+//            Update update = new Update().set("like", likes);
+//            mongoOperations.updateFirst(query, update, FacebookPost.class);
+//            update = new Update().set("dislike", disLikes);
+//            mongoOperations.updateFirst(query, update, FacebookPost.class);
+//
+//
+//        }
+//        return  "SUCESSS";
+//        FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
+//
+//        if(facebookPost.getUserName().equalsIgnoreCase(userName)) {
+//
+//            if(likeDislikeRequestDto.getLike()==1 && likeDislikeRequestDto.getDislike()==0) {
+//                List<User> userList=facebookPost.getPostLikedList();
+//                List<User> userDislikedList = facebookPost.getPostDislikedList();
+//                int prevLike = facebookPost.getLike();
+//                int x = likeDislikeRequestDto.getLike() + prevLike;
+//                facebookPost.setLike(x);
+//
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                if(userDislikedList.contains(user)){
+//                    userDislikedList.remove(user);
+//                }
+//                userList.add(user);
+//                facebookPost.setPostLikedList(userList);
+//                facebookPost.setPostDislikedList(userDislikedList);
+//                facebookPostRepository.save(facebookPost);
+//            }
+//            if(likeDislikeRequestDto.getDislike()==0 && likeDislikeRequestDto.getLike()==0){
+//                int prevDislike = facebookPost.getDislike();
+//                int x = likeDislikeRequestDto.getDislike() + prevDislike;
+//                facebookPost.setDislike(x);
+//                List<User> userList=facebookPost.getPostDislikedList();
+//                List<User> userLikedlist = facebookPost.getPostLikedList();
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                if(userLikedlist.contains(user)){
+//                    userLikedlist.remove(user);
+//                }
+//                userList.add(user);
+//                facebookPost.setPostDislikedList(userList);
+//                facebookPost.setPostLikedList(userLikedlist);
+//                facebookPostRepository.save(facebookPost);
+//            }
+//            // some changes started here
+//            if(likeDislikeRequestDto.getDislike() == 0 && likeDislikeRequestDto.getLike() == -1) {
+//
+//                List<User> userLikedlist = facebookPost.getPostLikedList();
+//                int prevLike=facebookPost.getLike()-1;
+//                facebookPost.setLike(prevLike);
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                userLikedlist.remove(user);
+//                facebookPost.setPostLikedList(userLikedlist);
+//                facebookPostRepository.save(facebookPost);
+//            }
+//            if(likeDislikeRequestDto.getDislike() == -1 && likeDislikeRequestDto.getLike() == 0)
+//            {
+//                List<User> userDisliked=facebookPost.getPostDislikedList();
+//                int prevDislike=facebookPost.getDislike()-1;
+//                facebookPost.setDislike(prevDislike);
+//                User user = new User();
+//                user.setLikeDislikeUserName(userName);
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                userDisliked.remove(user);
+//                facebookPost.setPostDislikedList(userDisliked);
+//                facebookPostRepository.save(facebookPost);
+//            }
+//
+//            //few changes more
+//            if(likeDislikeRequestDto.getLike()==-1 && likeDislikeRequestDto.getDislike()==1)
+//            {
+//                facebookPost.setLike(facebookPost.getLike()-1);
+//                facebookPost.setDislike(facebookPost.getDislike()+1);
+//                User user=new User();
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeUserName(userName);
+//                List<User> likedUserList=facebookPost.getPostLikedList();
+//                List<User> dislikedUserList=facebookPost.getPostDislikedList();
+//                likedUserList.remove(user);
+//                dislikedUserList.add(user);
+//            }
+//            if(likeDislikeRequestDto.getLike()==1 && likeDislikeRequestDto.getDislike()==-1)
+//            {
+//                facebookPost.setLike(facebookPost.getLike()+1);
+//                facebookPost.setDislike(facebookPost.getDislike()-1);
+//                User user=new User();
+//                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+//                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
+//                user.setLikeDislikeUserName(userName);
+//                List<User> likedUserList=facebookPost.getPostLikedList();
+//                List<User> dislikedUserList=facebookPost.getPostDislikedList();
+//                likedUserList.add(user);
+//                dislikedUserList.remove(user);
+//
+//            }
+//            //few changes end here
+//
+//            //some changes end here
+//
+//            return "successFul";
+//        }
+//        else
+//        {
+//            return "Can't Find User";
+//        }
+
+
+        String postId = likeDislikeRequestDto.getPostId();
+        System.out.println(likeDislikeRequestDto.getLike()+";;"+likeDislikeRequestDto.getUserName());
+        System.out.println(postId);
+        String userName=likeDislikeRequestDto.getUserName();
         FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
-
-        if(facebookPost.getUserName().equalsIgnoreCase(userName)) {
-
+        System.out.println(facebookPost.getUserName());
             if(likeDislikeRequestDto.getLike()==1) {
-                List<User> userList=facebookPost.getPostLike();
+                List<User> userLikedList=facebookPost.getPostLikedList();
+                List<User> userDisLikedList=new ArrayList<>();
                 int prevLike = facebookPost.getLike();
                 facebookPost.setLike(likeDislikeRequestDto.getLike() + prevLike);
                 User user = new User();
                 user.setLikeDislikeUserName(userName);
-                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
-                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getUrl());
-                userList.add(user);
-                facebookPost.setPostLike(userList);
+                user.setLikeDislikeFullName(userName);
+                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+                userLikedList.add(user);
+                facebookPost.setPostLikedList(userLikedList);
+                facebookPost.setDislike(0);
+                facebookPost.setPostDislikedList(userDisLikedList);
             }
-            if(likeDislikeRequestDto.getDislike()==1){
-                int prevDislike = facebookPost.getDislike();
-                facebookPost.setDislike(likeDislikeRequestDto.getDislike() + prevDislike);
-                List<User> userList2=facebookPost.getPostDislike();
+            else if(likeDislikeRequestDto.getLike()==0) {
+
+                List<User> userLikedList=facebookPost.getPostLikedList();
+                List<User> userDisLikedList=new ArrayList<>();
+                int prevLike = facebookPost.getLike();
+                facebookPost.setLike(prevLike-1);
                 User user = new User();
                 user.setLikeDislikeUserName(userName);
-                user.setLikeDislikeFullName(likeDislikeRequestDto.getFullName());
-                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getUrl());
-                userList2.add(user);
-                facebookPost.setPostDislike(userList2);
+                user.setLikeDislikeFullName(userName);
+                user.setLikeDislikeProfileUrl(likeDislikeRequestDto.getProfilepic());
+                userLikedList.remove(user);
+                facebookPost.setPostLikedList(userLikedList);
+                facebookPost.setDislike(0);
+                facebookPost.setPostDislikedList(userDisLikedList);
             }
             facebookPostRepository.save(facebookPost);
-            return "successFul";
+
+
+            return "SuccessFul";
+
+
+    }
+
+    private void makeNotification(String userName,String postId){
+        ObjectMapper objectMapper = new ObjectMapper();
+        LatestPostNotification latestPostNotification = new LatestPostNotification();
+        latestPostNotification.setEventType("NEWPOST");
+        latestPostNotification.setPostId(postId);
+        Friend friend = new Friend();
+        friend.setUserName(userName);
+        //todo
+        friend.setProfilePic("update later");
+        try{
+            FriendProfileDTO friendProfileDTO = userClient.getFriendProfile(userName);
+            friend.setFullName(friendProfileDTO.getFullName());
+            friend.setProfilePic(friendProfileDTO.getImg());
+            latestPostNotification.setPostedBy(friend);
         }
-        else
-        {
-            return "Can't Find User";
+        catch (Exception e){
+
         }
+
+        try {
+            FriendsSocialDTO friendsSocialDTO = friendClient.getFeedPost(userName);
+            List<Friend> friendList = friendsSocialDTO.getFriendList();
+            String key = "NEWPOST";
+            for (Friend f : friendList) {
+                key += "--" + f.getUserName();
+            }
+            String value = "";
+            try {
+                value = objectMapper.writeValueAsString(latestPostNotification);
+                kafkaMethod(key, value);
+            }
+            catch (Exception e){
+
+            }
+        }
+        catch (Exception e){
+
+
+        }
+    }
+
+    @Override
+    public FacebookPost getFacebookPostById(String postId,String userName)
+    {
+        FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
+        String user=facebookPost.getUserName();
+        if(user.equalsIgnoreCase(userName)){
+            return facebookPost;
+        }
+        return null;
+
+    }
+
+    @Override
+    public CommentsRequestDto createComment ( CommentsRequestDto commentsRequestDto) {
+        String postId = commentsRequestDto.getPostId();
+        FacebookPost facebookPost =  facebookPostRepository.findByPostId(postId);
+        System.out.println(postId+" ----");
+        String commentText = commentsRequestDto.getCommentText();
+        String commentedBy = commentsRequestDto.getCommentedBy();
+        try {
+            List<Comments> commentsList=facebookPost.getCommentList();
+            System.out.println(commentsList+"......");
+            Comments comments=new Comments();
+            comments.setCommentText(commentText);
+            comments.setCommentedBy(commentedBy);
+            commentsList.add(comments);
+            System.out.println(commentsList);
+            facebookPost.setCommentList(commentsList);
+            facebookPostRepository.save(facebookPost);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+       return commentsRequestDto;
+
+
+
 
     }
 

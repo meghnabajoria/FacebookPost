@@ -17,9 +17,10 @@ import java.util.List;
 
 public class FacebookRequestDto {
 
-    private String sessionId;
+
     private String postCaption;
     private List<String> postImages;
     private String location;
+//    private List<String> comments;
 
 }

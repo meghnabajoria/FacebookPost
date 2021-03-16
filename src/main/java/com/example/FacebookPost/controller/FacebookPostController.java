@@ -1,9 +1,7 @@
 package com.example.FacebookPost.controller;
 
-import com.example.FacebookPost.dto.FacebookRequestDto;
-import com.example.FacebookPost.dto.FacebookResponseDto;
-import com.example.FacebookPost.dto.LikeDislikeRequestDto;
-import com.example.FacebookPost.dto.LoginDto;
+import com.example.FacebookPost.dto.*;
+import com.example.FacebookPost.entity.Comments;
 import com.example.FacebookPost.entity.FacebookPost;
 import com.example.FacebookPost.entity.Login;
 import com.example.FacebookPost.repository.FacebookPostRepository;
@@ -34,10 +32,10 @@ public class FacebookPostController {
     private LoginDao loginDao;
 
 
-    @PostMapping("/qbpost")
-    public FacebookResponseDto uploadFacebookPost(@RequestBody FacebookRequestDto facebookRequestDto) {
 
-        String sessionId=facebookRequestDto.getSessionId();
+    @PostMapping("/qbpost")
+    public FacebookResponseDto uploadFacebookPost(@RequestHeader(value="sessionId") String sessionId,@RequestBody FacebookRequestDto facebookRequestDto) {
+
         List<Login> loginList = loginDao.findAll();
         HashMap<String,String> userMap=new HashMap<>();
         for(Login obj:loginList)
@@ -50,6 +48,7 @@ public class FacebookPostController {
         String userName=userMap.get(sessionId);
         System.out.println(userMap);
         System.out.println(userName);
+
         return facebookPostService.uploadFacebookPost(facebookRequestDto,userName);
     }
     @GetMapping("/getAllPostByUser")
@@ -66,46 +65,44 @@ public class FacebookPostController {
             System.out.println(userName);
             userMap.put(session,userName);
         }
-
         String userName=userMap.get(sessionId);
+        System.out.println(userName+"----");
         return facebookPostService.getFacebookPostByUserName(userName);
     }
     @GetMapping("/getAllPostByUserName/{userName}")
     public List<FacebookPost> getAllFacebookPostByUserNameOnly(@PathVariable("userName") String userName) {
 
-
         return facebookPostService.getFacebookPostByUserName(userName);
     }
-//    @GetMapping("/getPost/{postId}")
-//    public Optional<FacebookPost> getFacebookPost(@PathVariable("postId") String postId,@RequestHeader(value="sessionId") String sessionId) {
-//
-//        List<Login> loginList = loginDao.findAll();
-//        HashMap<String,String> userMap=new HashMap<>();
-//        for(Login obj:loginList)
-//        {
-//            String session=obj.getSessionId();
-//            String userName=obj.getUserName();
-//            userMap.put(session,userName);
-//        }
-//        String userName=userMap.get(sessionId);
-//
-//        return facebookPostService.getFacebookPost(postId,userName);
-//    }
+    @GetMapping("/getPost/{postId}")
+    public FacebookPost getFacebookPost(@PathVariable("postId") String postId,@RequestHeader(value="sessionId") String sessionId) {
 
-    @PutMapping("/updatePost/{postId}")
-    public FacebookResponseDto updateFacebookPost(@RequestBody FacebookRequestDto facebookRequestDto, @PathVariable("postId") String postId)
-    {
-
-        String sessionId=facebookRequestDto.getSessionId();
-        List<Login> loginList=loginDao.findAll();
+        List<Login> loginList = loginDao.findAll();
         HashMap<String,String> userMap=new HashMap<>();
         for(Login obj:loginList)
         {
-            String session=obj.getSessionId()+"t";
+            String session=obj.getSessionId();
             String userName=obj.getUserName();
             userMap.put(session,userName);
         }
         String userName=userMap.get(sessionId);
+        return facebookPostService.getFacebookPostById(postId,userName);
+    }
+///
+    @PutMapping("/updatePost/{postId}")
+    public FacebookResponseDto updateFacebookPost(@RequestBody FacebookRequestDto facebookRequestDto, @PathVariable("postId") String postId,@RequestHeader(value="sessionId") String sessionId)
+    {
+
+        List<Login> loginList=loginDao.findAll();
+        HashMap<String,String> userMap=new HashMap<>();
+        for(Login obj:loginList)
+        {
+            String session=obj.getSessionId();
+            String userName=obj.getUserName();
+            userMap.put(session,userName);
+        }
+        String userName=userMap.get(sessionId);
+
         return facebookPostService.updateFacebookPostByPostId(facebookRequestDto,postId,userName);
     }
 
@@ -113,6 +110,7 @@ public class FacebookPostController {
     public String deleteFacebookPost(@PathVariable("postId") String postId) {
         return facebookPostService.deleteFacebookPost(postId);
     }
+
     @GetMapping()
     public List<Login> getAllUsers() {
         return loginDao.findAll();
@@ -124,26 +122,32 @@ public class FacebookPostController {
         return loginDao.findUserById(sessionId);
     }
 
-    @PostMapping("/like-dislike")
-    public String likeDislike(LikeDislikeRequestDto likeDislikeRequestDto,@RequestHeader(value="sessionId") String sessionId){
+    @PostMapping("/postEngagement")
+    public String likeDislike(@RequestBody LikeDislikeRequestDto likeDislikeRequestDto){
 
 
-        List<Login> loginList = loginDao.findAll();
-        HashMap<String,String> userMap=new HashMap<>();
-        for(Login obj:loginList)
-        {
-            String session=obj.getSessionId();
-            String userName=obj.getUserName();
-            userMap.put(session,userName);
-        }
-        String userName=userMap.get(sessionId);
+//        List<Login> loginList = loginDao.findAll();
+//        HashMap<String,String> userMap=new HashMap<>();
+//        for(Login obj:loginList)
+//        {
+//            String session=obj.getSessionId();
+//            String userName=obj.getUserName();
+//            userMap.put(session,userName);
+//        }
 
-        return facebookPostService.likeDislike(userName,likeDislikeRequestDto);
+        return facebookPostService.likeDislike(likeDislikeRequestDto);
 
+    }
 
+    @GetMapping("/{userName}")
+    public String deleteSession(@PathVariable("userName") String userName)   {
+        return loginDao.deleteUser(userName);
+    }
 
+    @PostMapping("/postComment")
+    public CommentsRequestDto createComment(@RequestBody CommentsRequestDto commentsRequestDto) {
 
-
+        return facebookPostService.createComment(commentsRequestDto);
 
     }
 

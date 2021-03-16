@@ -5,18 +5,14 @@ import lombok.Setter;
 
 /**
  * @author meghna.bajoria
- * @since 11/03/21 3:06 PM
+ * @since 13/03/21 2:40 PM
  **/
-
 @Getter
 @Setter
-public class LikeDislikeRequestDto {
-
-    private int like;
-    private int dislike;
+public class CommentResponseDto {
     private String postId;
+    private String message;
     private String userName;
-    private  String profilepic;
 
 
 }
