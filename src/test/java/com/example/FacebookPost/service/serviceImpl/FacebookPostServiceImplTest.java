@@ -76,7 +76,8 @@ class FacebookPostServiceImplTest {
         List<Comments> commentsList=new ArrayList<>();
         commentsList.add(comments);
         facebookPost.setCommentList(commentsList);
-        Mockito.when(facebookPostRepository.save(facebookPost)).thenReturn(facebookPost);
+        //FacebookPost facebookPost1=facebookPostRepository.save(facebookPost);
+       // Mockito.when(facebookPostRepository.save(facebookPost)).thenReturn(facebookPost);
         FacebookRequestDto facebookRequestDto=new FacebookRequestDto();
         facebookRequestDto.setLocation("Varanasi");
         facebookRequestDto.setPostCaption("bad pic");
@@ -85,7 +86,8 @@ class FacebookPostServiceImplTest {
         facebookResponseDto.setPostId("id1");
         facebookResponseDto.setMessage("SuceessFul");
         facebookResponseDto.setUserName("Prateek");
-        assertEquals(facebookPostService.uploadFacebookPost(facebookRequestDto,"Prateek"), facebookResponseDto);
+        Mockito.when(facebookPostService.uploadFacebookPost(facebookRequestDto,"Prateek")).thenReturn(facebookResponseDto);
+       assertEquals(facebookPostService.uploadFacebookPost(facebookRequestDto,"Prateek"),facebookResponseDto);
 
     }
 
