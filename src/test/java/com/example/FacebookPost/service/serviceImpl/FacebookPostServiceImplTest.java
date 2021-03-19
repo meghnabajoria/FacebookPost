@@ -145,6 +145,8 @@ class FacebookPostServiceImplTest {
 
     @Test
     void deleteFacebookPost() {
+        Mockito.doNothing().when(facebookPostRepository).deleteById("id1");
+        assertEquals(facebookPostService.deleteFacebookPost("id1"),"deleted successfully");
     }
 
     @Test
@@ -226,11 +228,50 @@ class FacebookPostServiceImplTest {
         likeDislikeRequestDto1.setUserName("Prateek");
         likeDislikeRequestDto1.setProfilepic("profilepic");
 
+        LikeDislikeRequestDto likeDislikeRequestDto2 = new LikeDislikeRequestDto();
+        likeDislikeRequestDto2.setLike(3);
+        likeDislikeRequestDto2.setDislike(0);
+        likeDislikeRequestDto2.setPostId("id1");
+        likeDislikeRequestDto2.setUserName("Prateek");
+        likeDislikeRequestDto2.setProfilepic("profilepic");
+
         Mockito.when(facebookPostRepository.findByPostId("id1")).thenReturn(facebookPost);
 
         assertEquals(facebookPostService.likeDislike(likeDislikeRequestDto),"SuccessFul");
-        assertEquals(facebookPostService.likeDislike(likeDislikeRequestDto1),"SuccessFul  ");
+        assertEquals(facebookPostService.likeDislike(likeDislikeRequestDto1),"SuccessFul");
+        assertEquals(facebookPostService.likeDislike(likeDislikeRequestDto2),"Unsuccessful");
 
+        FacebookPost facebookPost1=new FacebookPost();
+        facebookPost1.setDislike(0);
+        facebookPost1.setLike(0);
+        facebookPost1.setLocation("Aligarh");
+        facebookPost1.setUserName("Priyank");
+        List<String> postImagesList1=new ArrayList<>();
+        facebookPost1.setPostImages(postImagesList1);
+        facebookPost1.setPostCaption("Good Boi");
+        facebookPost.setDate(timeStamp);
+        User user1=new User();
+        user1.setLikeDislikeUserName("Ashish");
+        user1.setLikeDislikeFullName("Verma");
+        user1.setLikeDislikeProfileUrl("jhsdkja");
+//        List<User> userList1=new ArrayList<>();
+        facebookPost.setPostId("id3");
+        Comments comments1=new Comments();
+        comments1.setCommentedBy("Ashish");
+        comments1.setCommentText("Worst thing I've ever seen");
+        List<Comments> commentsList1=new ArrayList<>();
+        commentsList1.add(comments1);
+        facebookPost.setCommentList(commentsList1);
+
+        LikeDislikeRequestDto likeDislikeRequestDto3 = new LikeDislikeRequestDto();
+        likeDislikeRequestDto3.setLike(0);
+        likeDislikeRequestDto3.setDislike(0);
+        likeDislikeRequestDto3.setPostId("id3");
+        likeDislikeRequestDto3.setUserName("Priyank");
+        likeDislikeRequestDto3.setProfilepic("profilepic");
+
+        Mockito.when(facebookPostRepository.findByPostId("id3")).thenReturn(facebookPost1);
+        assertEquals(facebookPostService.likeDislike(likeDislikeRequestDto3),"SuccessFul");
 
 
     }
@@ -265,6 +306,7 @@ class FacebookPostServiceImplTest {
         Mockito.when(facebookPostRepository.findByPostId("id1")).thenReturn(facebookPost);
 
         assertEquals(facebookPostService.getFacebookPostById("id1","Prateek"),facebookPost);
+        assertEquals(facebookPostService.getFacebookPostById("id1","Prateek1"),null);
     }
 
     @Test
@@ -304,6 +346,41 @@ class FacebookPostServiceImplTest {
         assertEquals(commentsRequestDto1.getPostId(),commentsRequestDto.getPostId());
         assertEquals(commentsRequestDto1.getCommentedBy(),commentsRequestDto.getCommentedBy());
         assertEquals(commentsRequestDto1.getCommentText(),commentsRequestDto.getCommentText());
+
+        FacebookPost facebookPost1=new FacebookPost();
+        facebookPost1.setDislike(0);
+        facebookPost1.setLike(0);
+        facebookPost1.setLocation("Aligarh");
+        facebookPost1.setUserName("Priyank");
+        List<String> postImagesList1=new ArrayList<>();
+        facebookPost1.setPostImages(postImagesList1);
+        facebookPost1.setPostCaption("Hello Priyank");
+        //String timeStamp1 = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(Calendar.getInstance().getTime());
+        facebookPost1.setDate(timeStamp);
+        User user1=new User();
+        user1.setLikeDislikeUserName("Ashish");
+        user1.setLikeDislikeFullName("Verma");
+        user1.setLikeDislikeProfileUrl("hwhw");
+        List<User> userList1=new ArrayList<>();
+        userList1.add(user);
+        facebookPost1.setPostLikedList(userList);
+        facebookPost1.setPostLikedList(userList);
+        facebookPost1.setPostId("id3");
+        Comments comments1=new Comments();
+        comments1.setCommentedBy("Ashish");
+        comments1.setCommentText("Worst Pic");
+//        List<Comments> commentsList1=new ArrayList<>();
+//        commentsList1.add(comments1);
+//        facebookPost1.setCommentList(commentsList1);
+        CommentsRequestDto commentsRequestDto2 = new CommentsRequestDto();
+        commentsRequestDto2.setPostId("id3");
+        commentsRequestDto2.setCommentText("Loser");
+        commentsRequestDto2.setCommentedBy("Ashish");
+        //CommentsRequestDto commentsRequestDto1 = facebookPostService.createComment(commentsRequestDto);
+
+        Mockito.when(facebookPostRepository.findByPostId("id3")).thenReturn(facebookPost1);
+
+        assertEquals(facebookPostService.createComment(commentsRequestDto2),commentsRequestDto2);
 
     }
 }

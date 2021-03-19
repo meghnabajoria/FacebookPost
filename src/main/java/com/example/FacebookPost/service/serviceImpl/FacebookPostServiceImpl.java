@@ -116,9 +116,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
     @Override
     public String deleteFacebookPost(String postId) {
         facebookPostRepository.deleteById(postId);
-        System.out.println("before kafka");
-        kafkaMethod("hello","from producer");
-        System.out.println("after kafka");
+        //kafkaMethod("hello","from producer");
         return "deleted successfully";
     }
 
@@ -314,6 +312,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
         String userName=likeDislikeRequestDto.getUserName();
         FacebookPost facebookPost=facebookPostRepository.findByPostId(postId);
         System.out.println(facebookPost.getUserName());
+        try{
             if(likeDislikeRequestDto.getLike()==1) {
                 List<User> userLikedList=facebookPost.getPostLikedList();
                 List<User> userDisLikedList=new ArrayList<>();
@@ -343,9 +342,13 @@ public class FacebookPostServiceImpl implements FacebookPostService {
                 facebookPost.setDislike(0);
                 facebookPost.setPostDislikedList(userDisLikedList);
             }
+            else{
+                return "Unsuccessful";
+            }}
+            catch (Exception e){
+                   e.printStackTrace();
+            }
             facebookPostRepository.save(facebookPost);
-
-
             return "SuccessFul";
 
 
@@ -400,8 +403,9 @@ public class FacebookPostServiceImpl implements FacebookPostService {
         if(user.equalsIgnoreCase(userName)){
             return facebookPost;
         }
-        return null;
-
+        else{
+            return null;
+        }
     }
 
     @Override
