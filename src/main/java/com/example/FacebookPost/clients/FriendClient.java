@@ -13,7 +13,7 @@ import java.util.List;
  * @author meghna.bajoria
  * @since 11/03/21 5:48 PM
  **/
-@FeignClient(name="fetchpost-client",url="10.177.68.59:8082")
+@FeignClient(name="fetchpost-client",url="10.177.68.67:8082")
 public interface FriendClient {
 
         @PostMapping("/fetchUserSocial")

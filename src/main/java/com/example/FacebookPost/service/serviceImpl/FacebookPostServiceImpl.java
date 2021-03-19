@@ -370,7 +370,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
             latestPostNotification.setPostedBy(friend);
         }
         catch (Exception e){
-
+            e.printStackTrace();
         }
 
         try {
@@ -430,7 +430,7 @@ public class FacebookPostServiceImpl implements FacebookPostService {
             e.printStackTrace();
         }
 
-       return commentsRequestDto;
+        return commentsRequestDto;
 
 
 
